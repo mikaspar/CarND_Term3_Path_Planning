@@ -3,11 +3,13 @@
 #include <uWS/uWS.h>
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 #include <thread>
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
+#include "spline.h"
 
 using namespace std;
 
@@ -37,6 +39,9 @@ string hasData(string s) {
 double distance(double x1, double y1, double x2, double y2)
 {
 	return sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+
+
+
 }
 int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y)
 {
@@ -163,6 +168,26 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 }
 
+
+double LinearCurveLength(const vector<double> &points_x, const vector<double> &points_y) {
+
+    auto start_x = points_x.begin();
+    auto start_y = points_y.begin();
+    if (start ==points_x.end()) return 0;
+    auto finish_x = start_x + 1;
+    auto finish_y = start_y + 1;
+    double sum = 0;
+    while (finish_x !=points_x.end() ){
+        sum += distance(*start_x, *start_y, *finish_x, *finish_y);
+        start_x = finish_x++;
+        start_y = finish_y++;
+    }
+    return sum;
+
+}
+
+
+
 int main() {
   uWS::Hub h;
 
@@ -200,6 +225,9 @@ int main() {
   	map_waypoints_dy.push_back(d_y);
   }
 
+  int map_waypoints_size = map_waypoints_x.size();
+  std::cout << "Number of waypoints" << map_waypoints_size << std::endl;
+
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -213,12 +241,12 @@ int main() {
 
       if (s != "") {
         auto j = json::parse(s);
-        
+
         string event = j[0].get<string>();
-        
+
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          
+
         	// Main car's localization Data
           	double car_x = j[1]["x"];
           	double car_y = j[1]["y"];
@@ -230,7 +258,7 @@ int main() {
           	// Previous path data given to the Planner
           	auto previous_path_x = j[1]["previous_path_x"];
           	auto previous_path_y = j[1]["previous_path_y"];
-          	// Previous path's end s and d values 
+          	// Previous path's end s and d values
           	double end_path_s = j[1]["end_path_s"];
           	double end_path_d = j[1]["end_path_d"];
 
@@ -242,6 +270,56 @@ int main() {
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
+          	vector<double> next_map_x;
+            vector<double> next_map_y;
+
+          	double pos_x;
+            double pos_y;
+            double angle;
+
+            std::cout << "pos_x = " << car_x << std::endl;
+            int path_size = previous_path_x.size();
+           // std::cout << "path size = " << path_size << std::endl;
+
+
+
+          int closest_pointer;
+          int next_pointer;
+
+          pos_x = car_x;
+          pos_y = car_y;
+          angle = deg2rad(car_yaw);
+
+          closest_pointer = ClosestWaypoint(pos_x, pos_y, map_waypoints_x, map_waypoints_y);
+          next_pointer    = NextWaypoint(pos_x, pos_y, angle, map_waypoints_x, map_waypoints_y);
+          std::cout << "next_pointer_x = " << map_waypoints_x[next_pointer] << std::endl;
+          std::cout << "next_pointer_y = " << map_waypoints_y[next_pointer] << std::endl;
+
+          vector<double> next_5_points_x, next_5_points_y;
+
+          for(int i =0; i < 5; i++){
+            next_5_points_x.push_back(map_waypoints_x[next_pointer+i]);
+            next_5_points_y.push_back(map_waypoints_y[next_pointer+i]);
+          }
+
+          double curve_length;
+          curve_length = LinearCurveLength(next_5_points_x, next_5_points_y);
+
+          std::cout << "curve_length = " << curve_lenght  << std::endl;
+          tk::spline road;
+          road.set_points(next_5_points_x,next_5_points_y);
+
+
+          double dist_inc = 0.5;
+          for(int i =0; i < 50; i++){
+
+                double dx = i*dist_inc*cos(angle);
+                next_x_vals.push_back(pos_x + dx );//i/50*(map_waypoints_x[next_pointer]-pos_x));
+                next_y_vals.push_back(road(pos_x+dx)); //i/50*(map_waypoints_y[next_pointer]-pos_y));
+                std::cout << "next_x = " << next_x_vals[i] << std::endl;
+          }
+
+
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
           	msgJson["next_x"] = next_x_vals;
@@ -251,7 +329,7 @@ int main() {
 
           	//this_thread::sleep_for(chrono::milliseconds(1000));
           	ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-          
+
         }
       } else {
         // Manual driving
