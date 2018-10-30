@@ -37,38 +37,7 @@ Maximal allowed acceleration is set in order to reach the maximal allowed speed.
 
 ### Path generation main.cpp lines 456 - 524
 
-Based on map data a 
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Using the spline function from section Tips, a set of new points of egos path are created and sent to the simulator.
-
-
+Based on map data and Frenet coordinates of next 3 waypoints in s distance of 50,60 and 90 meters are saved in a waypoints vector. Followingly the waypoints are converted into local vehicle coordinates. Converted waypoints are passed to the spline creator. If path im previous cycle was passed to the planner, it is going to be reused in order the keep the path smooth(line 310-3160). New path points are created (line 496-512) based on x,y position in the spline and the velocity of the ego vehicle. Added points are followingly converted back to global(map) coordinate system and sent to the planner.  
 
 ## Tips
 
