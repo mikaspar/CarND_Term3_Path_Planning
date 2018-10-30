@@ -7,7 +7,68 @@ In this project the goal is to safely navigate around a virtual highway with oth
 
 ## Details of Path Planner
 
-The planner takes the provided fusion data. It analyses for each car on which lane it drives, its velocity and longitudinal distance from the ego vehicle. Based on this information a cost function was developed in order to find the optimal ego lane. Based on longitudinal distance from vehicles in front of the ego vehicle and speed limit, the proper acceleration is set. Using the spline function from section Tips, a set of new points of egos path are created and sent to the simulator.
+### Prediction main.cpp lines 319-379
+The planner takes the provided fusion data. It analyses for each car on which lane it drives, its velocity and longitudinal distance from the ego vehicle in the prediction section. The prediction does not predict behavior of the traffic in "long term horizon" size the schedule time of the prediction, behavior planning and trajectory generation are the same.(20ms) The prediction is in this case more a observation of a "locally static world".
+
+Output: 
+   If a vehicle is detected within defined longitudinal boundaries on ego lane, it is found out if this is the closest vehicle and its speed.
+   If a vehcile is detected within defined longitudinal boundaries on the lane left or right from the ego lane, respective bool variables are set, in order to mark the lane as occupied.
+   
+   
+### Behavior Planning main.cpp lines 381-456    
+   
+Based on information provided by prediction a cost function was developed in order to find the optimal ego lane.
+
+The cost function has following components:
+1. It prefers to stay in the present lane, by adding 0.01 to the cost of all other lanes.
+2. It adds a weighted s-distance of each detected vehicle to the respective lane. 
+3.It adds  a weighted velocity of each detected vehicle to the respective lane.
+
+The lane with minimal cost function is identified as the best lane.
+
+Two main behavior branches can be identified:
+
+1. A vehicle detected in front of the ego vehicle 
+In this case the planner computes the corresponding acceleration to avoid collision. If the neighbouring lane is free, the lane change would not mean getting further away from the best lane and the minimum time from the last lane change is elapsed, the lane change will be performed.
+
+
+2. No vehicles detected in front of the ego vehicle
+Maximal allowed acceleration is set in order to reach the maximal allowed speed. The ego vehicle changes the lanes in order to reach the best lane. 
+
+### Path generation main.cpp lines 456 - 524
+
+Based on map data a 
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Using the spline function from section Tips, a set of new points of egos path are created and sent to the simulator.
+
+
 
 ## Tips
 
