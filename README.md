@@ -8,11 +8,11 @@ In this project the goal is to safely navigate around a virtual highway with oth
 ## Details of Path Planner
 
 ### Prediction main.cpp lines 319-379
-The planner takes the provided fusion data. It analyses for each car on which lane it drives, its velocity and longitudinal distance from the ego vehicle in the prediction section. The prediction does not predict behavior of the traffic in "long term horizon" size the schedule time of the prediction, behavior planning and trajectory generation are the same.(20ms) The prediction is in this case more a observation of a "locally static world".
+The planner takes the provided fusion data. It analyses for each car on which lane it drives, its velocity and longitudinal distance from the ego vehicle in the prediction section. The prediction does not predict behavior of the traffic in "long term horizon" since the schedule time of the prediction, behavior planning and trajectory generation are the same.(20ms) The prediction is in this case more an observation of a "locally static world".
 
 Output: 
-   If a vehicle is detected within defined longitudinal boundaries on ego lane, it is found out if this is the closest vehicle and its speed.
-   If a vehcile is detected within defined longitudinal boundaries on the lane left or right from the ego lane, respective bool variables are set, in order to mark the lane as occupied.
+   If a vehicle is detected within defined longitudinal boundaries on ego lane, the closest vehicle and its speed are identified.
+   If a vehcile is detected within defined longitudinal boundaries on the lane left or right from the ego lane, bool variables are set, in order to mark the respective lane as occupied.
    
    
 ### Behavior Planning main.cpp lines 381-456    
@@ -22,7 +22,7 @@ Based on information provided by prediction a cost function was developed in ord
 The cost function has following components:
 1. It prefers to stay in the present lane, by adding 0.01 to the cost of all other lanes.
 2. It adds a weighted s-distance of each detected vehicle to the respective lane. 
-3.It adds  a weighted velocity of each detected vehicle to the respective lane.
+3. It adds  a weighted velocity of each detected vehicle to the respective lane.
 
 The lane with minimal cost function is identified as the best lane.
 
@@ -33,11 +33,11 @@ In this case the planner computes the corresponding acceleration to avoid collis
 
 
 2. No vehicles detected in front of the ego vehicle
-Maximal allowed acceleration is set in order to reach the maximal allowed speed. The ego vehicle changes the lanes in order to reach the best lane. 
+Maximal allowed acceleration is set in order to reach the maximal allowed speed. The ego vehicle performes lane change(s) in order to reach the best lane. 
 
 ### Path generation main.cpp lines 456 - 524
 
-Based on map data and Frenet coordinates of next 3 waypoints in s distance of 50,60 and 90 meters are saved in a waypoints vector. Followingly the waypoints are converted into local vehicle coordinates. Converted waypoints are passed to the spline creator. If path im previous cycle was passed to the planner, it is going to be reused in order the keep the path smooth(line 310-3160). New path points are created (line 496-512) based on x,y position in the spline and the velocity of the ego vehicle. Added points are followingly converted back to global(map) coordinate system and sent to the planner.  
+Based on map data and Frenet coordinates of next 3 waypoints in s distance of 50,60 and 90 meters, XY coordinates of three waypoints are saved in a waypoints vector. Followingly the waypoints are converted into local vehicle coordinates. Converted waypoints are passed to the spline creator. If a path was passed to the planner in previous cycle, it is going to be reused in order the keep the path smooth(line 310-316). New path points are created (line 496-512) based on x,y position in the spline and the velocity of the ego vehicle. Added points are followingly converted back to global(map) coordinate system and sent to the planner.  
 
 ## Tips
 
